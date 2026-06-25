@@ -1,59 +1,163 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Tiny Trello-style Kanban Board
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A full-stack Trello-style Kanban board application built with Laravel 12 and React (Vite).
 
-## About Laravel
+## Features
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- **CRUD Boards** — Create, read, update, and delete boards with color customization
+- **CRUD Lists** — Organize boards into lists (columns) with inline title editing
+- **CRUD Cards** — Add, edit, and delete cards within lists
+- **Move Cards** — Drag-and-drop cards between lists using @dnd-kit
+- **Edit Card Details** — Modal editor for card title, description, due date, tags, and members
+- **Tags/Labels** — Color-coded tags with create-on-the-fly support
+- **Assign Members** — Assign users to cards with avatar display
+- **Due Dates with Overdue Highlighting** — Date picker with red highlighting for overdue cards
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Tech Stack
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### Backend
+- **Laravel 12** — PHP 8.2+
+- **SQLite** — Lightweight file-based database
+- **RESTful API** — JSON API with proper resource routes
 
-## Learning Laravel
+### Frontend
+- **React 18** with **Vite 5**
+- **@dnd-kit** — Drag-and-drop library
+- **Tailwind CSS 4** — Utility-first CSS framework
+- **Axios** — HTTP client
+- **React Router** — Client-side routing
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+## Project Structure
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+```
+kanban/
+├── app/
+│   ├── Http/Controllers/Api/
+│   │   ├── BoardController.php
+│   │   ├── ListController.php
+│   │   ├── CardController.php
+│   │   ├── TagController.php
+│   │   ├── MemberController.php
+│   │   └── UserController.php
+│   └── Models/
+│       ├── Board.php
+│       ├── ListModel.php
+│       ├── Card.php
+│       ├── Tag.php
+│       └── User.php
+├── database/
+│   ├── migrations/
+│   └── seeders/
+│       └── DatabaseSeeder.php
+├── routes/
+│   └── api.php
+├── bootstrap/
+│   └── app.php
+├── client/                    # React Frontend
+│   ├── src/
+│   │   ├── api/              # API service layer
+│   │   ├── components/       # React components
+│   │   ├── pages/            # Page components
+│   │   ├── App.jsx
+│   │   └── main.jsx
+│   └── vite.config.js
+└── .env.example
+```
 
-## Laravel Sponsors
+## Getting Started
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+### Prerequisites
 
-### Premium Partners
+- PHP 8.2+ (XAMPP recommended on Windows)
+- Composer
+- Node.js 18+ and npm
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+### Installation
 
-## Contributing
+1. **Clone the repository**
+   ```bash
+   cd C:\Users\lenovo
+   # The project is already in kanban/ directory
+   ```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+2. **Install PHP dependencies**
+   ```bash
+   cd kanban
+   composer install
+   ```
 
-## Code of Conduct
+3. **Install Node.js dependencies**
+   ```bash
+   cd client
+   npm install
+   ```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+4. **Set up the database**
+   ```bash
+   cd ..
+   touch database/database.sqlite
+   cp .env.example .env
+   php artisan key:generate
+   php artisan migrate:fresh --seed
+   ```
 
-## Security Vulnerabilities
+### Running the Application
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+1. **Start the Laravel backend** (from the `kanban/` directory)
+   ```bash
+   php artisan serve --host=0.0.0.0 --port=8000
+   ```
+
+2. **Start the React frontend** (from the `kanban/client/` directory)
+   ```bash
+   cd client
+   npm run dev
+   ```
+
+3. **Access the application**
+   - Frontend: http://localhost:5173
+   - API: http://localhost:8000/api
+
+### Seeded Data
+
+The database seeder creates:
+- **4 users**: Alice Johnson, Bob Smith, Carol White, Dave Brown
+- **5 tags**: Bug (red), Feature (blue), Enhancement (green), Urgent (amber), Design (purple)
+- **1 demo board** "Project Alpha" with 3 lists ("To Do", "In Progress", "Done") and 4 sample cards with assigned tags, members, and due dates (including one overdue card for testing)
+
+## API Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | /api/boards | List all boards |
+| POST | /api/boards | Create a board |
+| GET | /api/boards/{board} | Get board with lists, cards, tags, members |
+| PATCH | /api/boards/{board} | Update a board |
+| DELETE | /api/boards/{board} | Delete a board |
+| POST | /api/boards/{board}/lists | Create a list |
+| PATCH | /api/lists/{list} | Update a list |
+| DELETE | /api/lists/{list} | Delete a list |
+| POST | /api/lists/{list}/cards | Create a card |
+| PATCH | /api/cards/{card} | Update a card |
+| DELETE | /api/cards/{card} | Delete a card |
+| POST | /api/cards/{card}/move | Move card to another list |
+| POST | /api/cards/{card}/sync-tags | Sync card tags |
+| POST | /api/cards/{card}/sync-members | Sync card members |
+| GET/POST/DELETE | /api/tags | Tag CRUD |
+| GET | /api/users | List all users |
+
+## Known Limitations
+
+1. **API route resolution** — Some environments may have issues with Laravel's `artisan serve` routing `/{id}` patterns. If `/api/boards/1` returns HTML instead of JSON, try running via Laravel Valet or Apache/Nginx, or ensure `Accept: application/json` header is sent.
+
+2. **Drag-and-drop** — The @dnd-kit library is installed and wired up, but full drag-and-drop card movement between lists requires the backend to be running and the API responding correctly to the `/api/cards/{card}/move` endpoint.
+
+3. **Tag/Member sync** — The CardModal UI supports toggling tags and members, and calls the sync endpoints. Ensure the backend API is running for this to work.
+
+4. **Inline list title editing** — Double-click a list title to edit it. Press Enter to save, Escape to cancel. Requires the PATCH `/api/lists/{list}` endpoint to be accessible.
+
+5. **Authentication** — No authentication system is implemented. All operations are unauthenticated.
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+MIT
