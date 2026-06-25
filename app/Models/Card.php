@@ -15,9 +15,9 @@ class Card extends Model
     ];
 
     public function list(): BelongsTo
-    {
-        return $this->belongsTo(ListModel::class);
-    }
+{
+    return $this->belongsTo(ListModel::class, 'list_id');
+}
 
     public function tags(): BelongsToMany
     {

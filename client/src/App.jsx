@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Home from './pages/Home';
 import BoardView from './components/BoardView';
-
+import { Link } from 'react-router-dom';
 export default function App() {
   return (
     <BrowserRouter>
