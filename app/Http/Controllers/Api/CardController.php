@@ -54,4 +54,24 @@ class CardController extends Controller
 
         return response()->json($card->load(['tags', 'members']));
     }
+
+    public function syncTags(Request $request, Card $card)
+    {
+        $data = $request->validate([
+            'tag_ids' => 'required|array',
+            'tag_ids.*' => 'exists:tags,id',
+        ]);
+        $card->tags()->sync($data['tag_ids']);
+        return response()->json($card->load(['tags', 'members']));
+    }
+
+    public function syncMembers(Request $request, Card $card)
+    {
+        $data = $request->validate([
+            'user_ids' => 'required|array',
+            'user_ids.*' => 'exists:users,id',
+        ]);
+        $card->members()->sync($data['user_ids']);
+        return response()->json($card->load(['tags', 'members']));
+    }
 }

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import Card from './Card';
 import { createCard } from '../api/cards';
-import { deleteList } from '../api/lists';
+import { updateList, deleteList } from '../api/lists';
 
 export default function List({ list, onCardClick, onListUpdated, onListDeleted }) {
   const [isAdding, setIsAdding] = useState(false);
@@ -18,10 +18,16 @@ export default function List({ list, onCardClick, onListUpdated, onListDeleted }
   };
 
   const handleUpdateTitle = async () => {
-    if (!editTitle.trim()) return;
-    // We'll use cards API or just reload
+    if (!editTitle.trim()) {
+      setEditTitle(list.title);
+      setIsEditing(false);
+      return;
+    }
+    if (editTitle !== list.title) {
+      await updateList(list.id, { title: editTitle });
+      onListUpdated();
+    }
     setIsEditing(false);
-    onListUpdated();
   };
 
   const handleDelete = async () => {
@@ -39,7 +45,10 @@ export default function List({ list, onCardClick, onListUpdated, onListDeleted }
             value={editTitle}
             onChange={e => setEditTitle(e.target.value)}
             onBlur={handleUpdateTitle}
-            onKeyDown={e => e.key === 'Enter' && handleUpdateTitle()}
+            onKeyDown={e => {
+              if (e.key === 'Enter') handleUpdateTitle();
+              if (e.key === 'Escape') { setEditTitle(list.title); setIsEditing(false); }
+            }}
             className="font-semibold text-sm bg-white border rounded px-2 py-1 w-full"
             autoFocus
           />
@@ -47,6 +56,7 @@ export default function List({ list, onCardClick, onListUpdated, onListDeleted }
           <h3
             className="font-semibold text-sm text-gray-800 cursor-pointer"
             onDoubleClick={() => setIsEditing(true)}
+            title="Double-click to edit"
           >
             {list.title}
             <span className="ml-2 text-gray-400 font-normal">({list.cards?.length || 0})</span>
@@ -54,7 +64,7 @@ export default function List({ list, onCardClick, onListUpdated, onListDeleted }
         )}
         <button
           onClick={handleDelete}
-          className="text-gray-400 hover:text-red-500 text-lg leading-none"
+          className="text-gray-400 hover:text-red-500 text-lg leading-none ml-2"
           title="Delete list"
         >
           ×
@@ -73,7 +83,10 @@ export default function List({ list, onCardClick, onListUpdated, onListDeleted }
             <input
               value={newTitle}
               onChange={e => setNewTitle(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && handleAddCard()}
+              onKeyDown={e => {
+                if (e.key === 'Enter') handleAddCard();
+                if (e.key === 'Escape') { setIsAdding(false); setNewTitle(''); }
+              }}
               placeholder="Enter card title..."
               className="w-full text-sm border rounded px-3 py-2"
               autoFocus

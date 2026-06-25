@@ -17,6 +17,8 @@ Route::post('lists/{list}/cards', [CardController::class, 'store']);
 Route::patch('cards/{card}', [CardController::class, 'update']);
 Route::delete('cards/{card}', [CardController::class, 'destroy']);
 Route::post('cards/{card}/move', [CardController::class, 'move']);
+Route::post('cards/{card}/sync-tags', [CardController::class, 'syncTags']);
+Route::post('cards/{card}/sync-members', [CardController::class, 'syncMembers']);
 Route::apiResource('tags', TagController::class);
 Route::get('cards/{card}/members', [MemberController::class, 'index']);
 Route::post('cards/{card}/members', [MemberController::class, 'attach']);

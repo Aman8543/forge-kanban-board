@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
-import { updateCard, deleteCard } from '../api/cards';
-import { fetchTags } from '../api/tags';
-import { fetchMembers as fetchCardMembers, attachMember, detachMember } from '../api/members';
+import { updateCard, deleteCard, syncTags, syncMembers } from '../api/cards';
+import { fetchTags, createTag } from '../api/tags';
 import { fetchUsers } from '../api/users';
 import DueDateBadge from './DueDateBadge';
 import TagBadge from './TagBadge';
@@ -14,6 +13,10 @@ export default function CardModal({ card, onClose, onUpdated, onDeleted }) {
   const [selectedTags, setSelectedTags] = useState(card.tags?.map(t => t.id) || []);
   const [allUsers, setAllUsers] = useState([]);
   const [selectedMembers, setSelectedMembers] = useState(card.members?.map(m => m.id) || []);
+  const [saving, setSaving] = useState(false);
+  const [showNewTag, setShowNewTag] = useState(false);
+  const [newTagName, setNewTagName] = useState('');
+  const [newTagColor, setNewTagColor] = useState('#6B7280');
 
   useEffect(() => {
     fetchTags().then(setAllTags);
@@ -21,26 +24,24 @@ export default function CardModal({ card, onClose, onUpdated, onDeleted }) {
   }, [card.id]);
 
   const handleSave = async () => {
-    const updated = await updateCard(card.id, {
-      title,
-      description,
-      due_date: dueDate || null,
-    });
-
-    // Sync tags
-    const currentTagIds = card.tags?.map(t => t.id) || [];
-    const toAdd = selectedTags.filter(id => !currentTagIds.includes(id));
-    const toRemove = currentTagIds.filter(id => !selectedTags.includes(id));
-
-    // For members
-    const currentMemberIds = card.members?.map(m => m.id) || [];
-    const toAddMembers = selectedMembers.filter(id => !currentMemberIds.includes(id));
-    const toRemoveMembers = currentMemberIds.filter(id => !selectedMembers.includes(id));
-
-    // Note: In a real app, we'd have proper endpoints for this.
-    // For now, we rely on the card being re-fetched
-    onUpdated();
-    onClose();
+    if (saving) return;
+    setSaving(true);
+    try {
+      await updateCard(card.id, {
+        title,
+        description,
+        due_date: dueDate || null,
+      });
+      await syncTags(card.id, selectedTags);
+      await syncMembers(card.id, selectedMembers);
+      onUpdated();
+      onClose();
+    } catch (err) {
+      console.error('Failed to save:', err);
+      alert('Failed to save changes');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleDelete = async () => {
@@ -63,10 +64,21 @@ export default function CardModal({ card, onClose, onUpdated, onDeleted }) {
     );
   };
 
+  const handleCreateTag = async () => {
+    if (!newTagName.trim()) return;
+    const tag = await createTag({ name: newTagName, color: newTagColor });
+    setAllTags(prev => [...prev, tag]);
+    setSelectedTags(prev => [...prev, tag.id]);
+    setNewTagName('');
+    setShowNewTag(false);
+  };
+
+  const colors = ['#6B7280', '#EF4444', '#F59E0B', '#10B981', '#3B82F6', '#8B5CF6', '#EC4899'];
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-start justify-center pt-16 z-50" onClick={onClose}>
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-lg mx-4 overflow-hidden" onClick={e => e.stopPropagation()}>
-        <div className="p-6">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-lg mx-4 overflow-hidden max-h-[85vh] flex flex-col" onClick={e => e.stopPropagation()}>
+        <div className="p-6 overflow-y-auto flex-1">
           <div className="flex items-start justify-between mb-4">
             <input
               value={title}
@@ -99,38 +111,51 @@ export default function CardModal({ card, onClose, onUpdated, onDeleted }) {
               {dueDate && <DueDateBadge date={dueDate} />}
             </div>
 
-            {allTags.length > 0 && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Tags</label>
-                <div className="flex flex-wrap gap-2">
-                  {allTags.map(tag => (
-                    <button
-                      key={tag.id}
-                      onClick={() => toggleTag(tag.id)}
-                      className={`transition-all ${selectedTags.includes(tag.id) ? 'ring-2 ring-offset-1 ring-blue-500 opacity-100' : 'opacity-60 hover:opacity-100'}`}
-                    >
-                      <TagBadge name={tag.name} color={tag.color} />
-                    </button>
-                  ))}
-                </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Tags</label>
+              <div className="flex flex-wrap gap-2 mb-2">
+                {allTags.map(tag => (
+                  <button
+                    key={tag.id}
+                    onClick={() => toggleTag(tag.id)}
+                    className={`transition-all ${selectedTags.includes(tag.id) ? 'ring-2 ring-offset-1 ring-blue-500 opacity-100' : 'opacity-60 hover:opacity-100'}`}
+                  >
+                    <TagBadge name={tag.name} color={tag.color} />
+                  </button>
+                ))}
               </div>
-            )}
-
-            {card.tags && card.tags.length > 0 && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Remove Tags</label>
-                <div className="flex flex-wrap gap-2">
-                  {card.tags.map(tag => (
-                    <TagBadge
-                      key={tag.id}
-                      name={tag.name}
-                      color={tag.color}
-                      onRemove={() => toggleTag(tag.id)}
-                    />
-                  ))}
+              {showNewTag ? (
+                <div className="flex items-center gap-2 mt-2">
+                  <input
+                    value={newTagName}
+                    onChange={e => setNewTagName(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && handleCreateTag()}
+                    placeholder="Tag name..."
+                    className="text-sm border rounded px-2 py-1 w-32"
+                    autoFocus
+                  />
+                  <div className="flex gap-1">
+                    {colors.map(c => (
+                      <button
+                        key={c}
+                        onClick={() => setNewTagColor(c)}
+                        className={`w-5 h-5 rounded-full ${newTagColor === c ? 'ring-2 ring-offset-1 ring-blue-500' : ''}`}
+                        style={{ backgroundColor: c }}
+                      />
+                    ))}
+                  </div>
+                  <button onClick={handleCreateTag} className="text-xs bg-blue-500 text-white px-2 py-1 rounded">Add</button>
+                  <button onClick={() => setShowNewTag(false)} className="text-xs text-gray-500">Cancel</button>
                 </div>
-              </div>
-            )}
+              ) : (
+                <button
+                  onClick={() => setShowNewTag(true)}
+                  className="text-xs text-blue-500 hover:text-blue-700"
+                >
+                  + Create new tag
+                </button>
+              )}
+            </div>
 
             {allUsers.length > 0 && (
               <div>
@@ -174,9 +199,10 @@ export default function CardModal({ card, onClose, onUpdated, onDeleted }) {
             </button>
             <button
               onClick={handleSave}
-              className="px-4 py-2 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
+              disabled={saving}
+              className="px-4 py-2 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
             >
-              Save Changes
+              {saving ? 'Saving...' : 'Save Changes'}
             </button>
           </div>
         </div>
